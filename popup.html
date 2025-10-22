@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Tab Grouper</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🕒 标签时间分组</h1>
+            <p class="subtitle">根据时间自动整理您的标签页</p>
+        </header>
+        
+        <main class="main-content">
+            <!-- 当前状态 -->
+            <div class="status-section">
+                <div class="status-item main-toggle">
+                    <div class="simple-toggle-container">
+                        <div class="simple-toggle" id="auto-toggle">
+                            <div class="toggle-track">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                            <span class="toggle-status" id="auto-status">未启用</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span class="label">当前标签:</span>
+                    <span class="count" id="tab-count">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">分组数量:</span>
+                    <span class="count" id="group-count">0</span>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="actions-section">
+                <h3>快速操作</h3>
+                <div class="action-buttons">
+                    <button class="action-btn" id="group-by-hour">
+                        <span class="icon">🕐</span>
+                        <span class="text">按小时分组</span>
+                    </button>
+                    <button class="action-btn" id="group-by-day">
+                        <span class="icon">📅</span>
+                        <span class="text">按天分组</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 分组预览 -->
+            <div class="groups-section">
+                <h3>当前分组</h3>
+                <div class="groups-list" id="groups-list">
+                    <div class="no-groups">暂无分组</div>
+                </div>
+            </div>
+
+            <!-- 设置区域 -->
+            <div class="settings-section">
+                <h3>设置</h3>
+                <div class="setting-item">
+                    <label for="group-interval">分组间隔:</label>
+                    <select id="group-interval">
+                        <option value="30">30分钟</option>
+                        <option value="60" selected>1小时</option>
+                        <option value="120">2小时</option>
+                        <option value="240">4小时</option>
+                        <option value="am_pm">上午/下午</option>
+                        <option value="720">半天(12小时)</option>
+                        <option value="1440">1天</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="auto-interval">自动检查间隔:</label>
+                    <select id="auto-interval">
+                        <option value="1">1分钟</option>
+                        <option value="5" selected>5分钟</option>
+                        <option value="10">10分钟</option>
+                        <option value="30">30分钟</option>
+                    </select>
+                </div>
+                <div class="setting-item checkbox-item">
+                    <input type="checkbox" id="group-pinned" checked>
+                    <label for="group-pinned">包含固定标签</label>
+                </div>
+                <div class="setting-item checkbox-item">
+                    <input type="checkbox" id="auto-ungroup-on-disable">
+                    <label for="auto-ungroup-on-disable">关闭自动分组时取消现有分组</label>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>Auto Tab Grouper v1.1.2</p>
+        </footer>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

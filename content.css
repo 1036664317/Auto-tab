@@ -1,0 +1,46 @@
+/* content.css - Auto Tab Grouper 内容脚本样式 */
+
+/* 这个文件用于在网页中注入的样式，目前为空 */
+/* 如果需要在网页中显示插件相关的UI元素，可以在这里添加样式 */
+
+/* 示例：如果要在页面中显示分组信息的浮动窗口 */
+.auto-tab-grouper-overlay {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    max-width: 300px;
+}
+
+.auto-tab-grouper-overlay h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.auto-tab-grouper-overlay p {
+    margin: 4px 0;
+    color: #666;
+}
+
+.auto-tab-grouper-close {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
+}
+
+.auto-tab-grouper-close:hover {
+    color: #333;
+}

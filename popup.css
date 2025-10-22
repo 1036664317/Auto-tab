@@ -1,0 +1,462 @@
+/* Auto Tab Grouper - 现代化样式 */
+
+:root {
+    /* Chrome标签组颜色 */
+    --group-grey: #5f6368;
+    --group-blue: #1a73e8;
+    --group-red: #d93025;
+    --group-yellow: #fbbc04;
+    --group-green: #34a853;
+    --group-pink: #f439a0;
+    --group-purple: #9c27b0;
+    --group-cyan: #00bcd4;
+    --group-orange: #ff9800;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    width: 380px;
+    min-height: 500px;
+}
+
+.container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* 主要内容 */
+.main-content {
+    padding: 20px;
+}
+
+/* 状态区域 */
+.status-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.label {
+    font-size: 14px;
+    color: #666;
+}
+
+.status {
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.count {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.toggle-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.toggle-btn.active {
+    background: #dc3545;
+}
+
+.toggle-btn.active:hover {
+    background: #c82333;
+}
+
+/* 主要分组开关样式 */
+.main-toggle {
+    background: transparent;
+    border: none;
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+    justify-content: center;
+}
+
+/* 简单开关容器 */
+.simple-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 简单开关主体 */
+.simple-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.simple-toggle:hover {
+    opacity: 0.8;
+}
+
+/* 开关轨道 */
+.toggle-track {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background-color: #dc3545;
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.simple-toggle.active .toggle-track {
+    background-color: #28a745;
+}
+
+/* 开关滑块 */
+.toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.simple-toggle.active .toggle-thumb {
+    transform: translateX(20px);
+}
+
+/* 开关状态文字 */
+.toggle-status {
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    min-width: 50px;
+    transition: color 0.3s ease;
+}
+
+.simple-toggle.active .toggle-status {
+    color: #28a745;
+}
+
+/* 操作区域 */
+.actions-section {
+    margin-bottom: 20px;
+}
+
+.actions-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: #333;
+}
+
+.action-btn:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-color: #007bff;
+}
+
+.action-btn.primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+}
+
+.action-btn .icon {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.action-btn .text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 分组列表 */
+.groups-section {
+    margin-bottom: 20px;
+}
+
+.groups-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.groups-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    border-left: 4px solid #007bff;
+    gap: 8px;
+}
+
+.group-color {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.group-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.group-count {
+    background: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.no-groups {
+    text-align: center;
+    color: #6c757d;
+    font-size: 13px;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* 设置区域 */
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.setting-item label {
+    font-size: 14px;
+    color: #666;
+}
+
+.setting-item select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+}
+
+.checkbox-item {
+    justify-content: flex-start;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+}
+
+/* 底部 */
+.footer {
+    background: #f8f9fa;
+    text-align: center;
+    padding: 12px;
+    border-top: 1px solid #e9ecef;
+}
+
+.footer p {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+/* 滚动条样式 */
+.groups-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.groups-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.groups-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.groups-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.group-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 响应式调整 */
+@media (max-width: 400px) {
+    body {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .main-toggle {
+        padding: 15px !important;
+    }
+    
+    .main-toggle .label {
+        font-size: 16px;
+    }
+    
+    .toggle-track {
+        width: 38px;
+        height: 20px;
+    }
+    
+    .toggle-thumb {
+        width: 16px;
+        height: 16px;
+        top: 2px;
+        left: 2px;
+    }
+    
+    .simple-toggle.active .toggle-thumb {
+        transform: translateX(18px);
+    }
+    
+    .toggle-status {
+        font-size: 12px;
+        min-width: 40px;
+    }
+}
+
+@media (max-width: 350px) {
+    .action-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .action-btn .text {
+        font-size: 11px;
+    }
+}
