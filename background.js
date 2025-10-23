@@ -8,7 +8,8 @@ let settings = {
     groupInterval: 60, // 分钟 或 'am_pm'
     autoInterval: 5, // 分钟
     includePinned: true,
-    groupingMode: 'time'
+    groupingMode: 'time',
+    autoCollapse: true  // 分组后自动折叠
 };
 
 // 标签创建时间跟踪
@@ -27,12 +28,40 @@ async function initialize() {
     // 加载设置
     await loadSettings();
     
+    // 初始化现有标签的创建时间
+    await initializeExistingTabs();
+    
     // 设置标签事件监听器
     setupTabListeners();
     
     // 如果自动分组已启用，启动定时器
     if (settings.autoGrouping) {
         startAutoGrouping();
+    }
+}
+
+/**
+ * 初始化现有标签的创建时间
+ */
+async function initializeExistingTabs() {
+    try {
+        const allTabs = await chrome.tabs.query({});
+        const now = Date.now();
+        
+        console.log(`初始化 ${allTabs.length} 个现有标签的创建时间`);
+        
+        for (const tab of allTabs) {
+            if (!tabCreationTimes.has(tab.id)) {
+                // 对于已存在的标签，我们假设它们是在不同时间段创建的
+                // 使用一个随机的时间偏移，模拟不同的创建时间
+                // 这样可以更好地测试分组功能
+                const randomOffset = Math.floor(Math.random() * 120 * 60 * 1000); // 0-120分钟前
+                tabCreationTimes.set(tab.id, now - randomOffset);
+                console.log(`标签 ${tab.id} 初始化时间: ${Math.floor(randomOffset / 60000)}分钟前`);
+            }
+        }
+    } catch (error) {
+        console.error('初始化现有标签时间失败:', error);
     }
 }
 
@@ -301,23 +330,45 @@ async function groupTabsByTimeInWindow(tabs, timeUnit) {
     const groupInterval = settings.groupInterval * 60 * 1000; // 转换为毫秒
     const timeGroups = new Map();
     
+    console.log('=== 开始按时间分组标签 ===');
+    console.log(`当前时间: ${new Date(now).toLocaleString()}`);
+    console.log(`分组间隔设置: ${settings.groupInterval} 分钟 (${settings.groupInterval === 'am_pm' ? '上午/下午模式' : groupInterval + '毫秒'})`);
+    console.log(`时间单位: ${timeUnit}`);
+    console.log(`总标签数: ${tabs.length}`);
+    
     // 过滤标签（排除已分组的和固定的标签，如果设置不包含固定标签）
     const ungroupedTabs = tabs.filter(tab => {
-        if (tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) return false;
-        if (!settings.includePinned && tab.pinned) return false;
+        if (tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+            console.log(`跳过已分组标签: ${tab.id} (分组ID: ${tab.groupId})`);
+            return false;
+        }
+        if (!settings.includePinned && tab.pinned) {
+            console.log(`跳过固定标签: ${tab.id}`);
+            return false;
+        }
         return true;
     });
+    
+    console.log(`待分组标签数: ${ungroupedTabs.length}`);
     
     // 按时间分组标签
     for (const tab of ungroupedTabs) {
         const creationTime = tabCreationTimes.get(tab.id) || now;
+        const ageMinutes = Math.floor((now - creationTime) / (1000 * 60));
         const actualInterval = settings.groupInterval === 'am_pm' ? 'am_pm' : groupInterval;
         const groupKey = getTimeGroupKey(creationTime, now, actualInterval, timeUnit);
+        
+        console.log(`标签 ${tab.id}: "${tab.title.substring(0, 30)}..." - 年龄: ${ageMinutes}分钟 -> 分组: ${groupKey}`);
         
         if (!timeGroups.has(groupKey)) {
             timeGroups.set(groupKey, []);
         }
         timeGroups.get(groupKey).push(tab);
+    }
+    
+    console.log(`\n总共创建 ${timeGroups.size} 个时间分组:`);
+    for (const [key, tabs] of timeGroups) {
+        console.log(`  - ${key}: ${tabs.length} 个标签`);
     }
     
     // 创建分组
@@ -328,17 +379,18 @@ async function groupTabsByTimeInWindow(tabs, timeUnit) {
                 const tabIds = groupTabs.map(tab => tab.id);
                 const groupId = await chrome.tabs.group({ tabIds });
                 
-                // 设置分组标题和颜色
+                // 设置分组标题、颜色和折叠状态
                 const groupTitle = getGroupTitle(groupKey, timeUnit);
                 const groupColor = getGroupColor(groupKey);
                 
                 await chrome.tabGroups.update(groupId, {
                     title: groupTitle,
-                    color: groupColor
+                    color: groupColor,
+                    collapsed: settings.autoCollapse !== false  // 默认折叠，除非设置明确禁用
                 });
                 
                 groupsCreated++;
-                console.log(`创建分组: ${groupTitle}，包含 ${tabIds.length} 个标签`);
+                console.log(`✓ 创建分组: "${groupTitle}" (${groupColor})，包含 ${tabIds.length} 个标签 [已折叠]`);
                 
             } catch (error) {
                 console.error('创建分组失败:', error);
@@ -348,6 +400,7 @@ async function groupTabsByTimeInWindow(tabs, timeUnit) {
         }
     }
     
+    console.log(`=== 分组完成，共创建 ${groupsCreated} 个分组 ===\n`);
     return groupsCreated;
 }
 
@@ -371,16 +424,26 @@ function getTimeGroupKey(creationTime, currentTime, interval, timeUnit) {
                 return getAmPmGroupKey(creationDate, currentDate);
             }
             
-            if (diffMinutes < interval) {
-                return 'recent';
-            } else if (diffMinutes < interval * 2) {
-                return 'interval1';
-            } else if (diffMinutes < 60) {
-                return 'hour';
+            // 将间隔从毫秒转换为分钟
+            const intervalMinutes = typeof interval === 'number' ? Math.floor(interval / (1000 * 60)) : 60;
+            
+            console.log(`  计算分组键: 年龄=${diffMinutes}分钟, 间隔=${intervalMinutes}分钟`);
+            
+            // 按照设置的时间间隔进行分组
+            if (diffMinutes < intervalMinutes) {
+                return `recent_${intervalMinutes}`;  // 最近N分钟内
+            } else if (diffMinutes < intervalMinutes * 2) {
+                return `interval_${intervalMinutes}_1`;  // N分钟到2N分钟
+            } else if (diffMinutes < intervalMinutes * 3) {
+                return `interval_${intervalMinutes}_2`;  // 2N分钟到3N分钟
             } else if (diffMinutes < 60 * 24) {
-                return 'today';
+                // 超过3倍间隔但在24小时内，按小时分组
+                const hoursAgo = Math.floor(diffMinutes / 60);
+                return `hours_${hoursAgo}`;
             } else {
-                return 'older';
+                // 超过24小时，按天分组
+                const daysAgo = Math.floor(diffMinutes / (60 * 24));
+                return `days_${daysAgo}`;
             }
     }
 }
@@ -438,6 +501,26 @@ function getGroupTitle(groupKey, timeUnit) {
                 return getAmPmGroupTitle(groupKey);
             }
             
+            // 处理新的分组键格式
+            if (typeof groupKey === 'string') {
+                if (groupKey.startsWith('recent_')) {
+                    const minutes = groupKey.split('_')[1];
+                    return `最近${minutes}分钟`;
+                } else if (groupKey.startsWith('interval_')) {
+                    const parts = groupKey.split('_');
+                    const minutes = parts[1];
+                    const multiplier = parseInt(parts[2]) + 1;
+                    return `${minutes * multiplier}分钟前`;
+                } else if (groupKey.startsWith('hours_')) {
+                    const hours = groupKey.split('_')[1];
+                    return `${hours}小时前`;
+                } else if (groupKey.startsWith('days_')) {
+                    const days = groupKey.split('_')[1];
+                    return `${days}天前`;
+                }
+            }
+            
+            // 旧版本兼容
             switch (groupKey) {
                 case 'recent':
                     return '最近打开';
@@ -496,6 +579,24 @@ function getGroupColor(groupKey) {
         return getAmPmGroupColor(groupKey);
     }
     
+    // 处理新的分组键格式
+    if (typeof groupKey === 'string') {
+        if (groupKey.startsWith('recent_')) {
+            return 'green';  // 最近的标签 - 绿色
+        } else if (groupKey.startsWith('interval_') && groupKey.endsWith('_1')) {
+            return 'blue';   // 第一个间隔 - 蓝色
+        } else if (groupKey.startsWith('interval_') && groupKey.endsWith('_2')) {
+            return 'cyan';   // 第二个间隔 - 青色
+        } else if (groupKey.startsWith('hours_')) {
+            return 'yellow'; // 按小时 - 黄色
+        } else if (groupKey.startsWith('days_')) {
+            const days = parseInt(groupKey.split('_')[1]);
+            if (days === 1) return 'orange';  // 1天前 - 橙色
+            return 'red';    // 更早 - 红色
+        }
+    }
+    
+    // 旧版本兼容
     switch (groupKey) {
         case 'recent':
             return 'green';

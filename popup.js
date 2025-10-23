@@ -45,6 +45,7 @@ function applySettings(settings) {
     document.getElementById('auto-interval').value = settings.autoInterval || 5;
     document.getElementById('group-pinned').checked = settings.includePinned;
     document.getElementById('auto-ungroup-on-disable').checked = settings.autoUngroupOnDisable || false;
+    document.getElementById('auto-collapse').checked = settings.autoCollapse !== false;  // 默认为 true
     
     const autoToggle = document.getElementById('auto-toggle');
     const autoStatus = document.getElementById('auto-status');
@@ -76,6 +77,7 @@ function bindEventListeners() {
     document.getElementById('auto-interval').addEventListener('change', saveSettings);
     document.getElementById('group-pinned').addEventListener('change', saveSettings);
     document.getElementById('auto-ungroup-on-disable').addEventListener('change', saveSettings);
+    document.getElementById('auto-collapse').addEventListener('change', saveSettings);
 }
 
 /**
@@ -333,7 +335,8 @@ function saveSettings() {
         groupInterval: groupIntervalValue === 'am_pm' ? 'am_pm' : parseInt(groupIntervalValue),
         autoInterval: parseInt(document.getElementById('auto-interval').value),
         includePinned: document.getElementById('group-pinned').checked,
-        autoUngroupOnDisable: document.getElementById('auto-ungroup-on-disable').checked
+        autoUngroupOnDisable: document.getElementById('auto-ungroup-on-disable').checked,
+        autoCollapse: document.getElementById('auto-collapse').checked
     };
     
     chrome.storage.sync.get(['tabGrouperSettings'], function(result) {
