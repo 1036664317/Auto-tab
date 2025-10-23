@@ -97,17 +97,9 @@ function setupTabListeners() {
         console.log(`标签 ${tabId} 记录已清理`);
     });
     
-    // 标签更新时可能需要重新分组
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (changeInfo.status === 'complete' && autoGroupingEnabled) {
-            // 延迟执行，避免频繁分组
-            setTimeout(() => {
-                if (settings.autoGrouping) {
-                    performAutoGrouping();
-                }
-            }, 2000);
-        }
-    });
+    // 标签更新监听器 - 移除，避免频繁触发分组
+    // 自动分组将通过定时器执行，不需要在标签更新时触发
+    // chrome.tabs.onUpdated.addListener(...)
 }
 
 /**
@@ -153,8 +145,13 @@ async function handleToggleAutoGrouping(enabled, sendResponse) {
         await chrome.storage.sync.set({ tabGrouperSettings: settings });
         
         if (enabled) {
+            // 启动自动分组定时器
             startAutoGrouping();
-            console.log('自动分组已启用');
+            console.log('自动分组定时器已启动');
+            
+            // 立即执行一次分组
+            console.log('开启自动分组，立即执行一次分组...');
+            await performAutoGrouping();
         } else {
             stopAutoGrouping();
             console.log('自动分组已禁用');
@@ -336,12 +333,38 @@ async function groupTabsByTimeInWindow(tabs, timeUnit) {
     console.log(`时间单位: ${timeUnit}`);
     console.log(`总标签数: ${tabs.length}`);
     
-    // 过滤标签（排除已分组的和固定的标签，如果设置不包含固定标签）
-    const ungroupedTabs = tabs.filter(tab => {
-        if (tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
-            console.log(`跳过已分组标签: ${tab.id} (分组ID: ${tab.groupId})`);
-            return false;
+    // 第一步：先取消所有现有分组，避免重复分组
+    const groupedTabs = tabs.filter(tab => tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE);
+    if (groupedTabs.length > 0) {
+        console.log(`取消现有 ${groupedTabs.length} 个已分组标签...`);
+        const groupMap = new Map();
+        groupedTabs.forEach(tab => {
+            if (!groupMap.has(tab.groupId)) {
+                groupMap.set(tab.groupId, []);
+            }
+            groupMap.get(tab.groupId).push(tab.id);
+        });
+        
+        for (const [groupId, tabIds] of groupMap) {
+            try {
+                await chrome.tabs.ungroup(tabIds);
+                console.log(`已取消分组 ${groupId}`);
+            } catch (ungroupError) {
+                console.error(`取消分组 ${groupId} 失败:`, ungroupError);
+            }
         }
+    }
+    
+    // 第二步：过滤要分组的标签（现在所有标签都未分组）
+    // 重新查询标签以获取最新状态
+    const windowId = tabs[0]?.windowId;
+    if (!windowId) {
+        console.log('无法获取窗口ID，跳过分组');
+        return 0;
+    }
+    
+    const freshTabs = await chrome.tabs.query({ windowId: windowId });
+    const ungroupedTabs = freshTabs.filter(tab => {
         if (!settings.includePinned && tab.pinned) {
             console.log(`跳过固定标签: ${tab.id}`);
             return false;

@@ -239,7 +239,7 @@ function toggleAutoGrouping() {
         
         // 先更新界面状态
         applySettings(settings);
-        showNotification(newState ? '正在启用自动分组并立即分组...' : '正在关闭自动分组...', 'info');
+        showNotification(newState ? '正在启用自动分组...' : '正在关闭自动分组...', 'info');
         
         chrome.storage.sync.set({tabGrouperSettings: settings}, function() {
             // 通知background script
@@ -260,11 +260,17 @@ function toggleAutoGrouping() {
                 
                 if (response && response.success) {
                     if (settings.autoGrouping) {
-                        // 开启自动分组时立即执行一次分组
-                        showNotification('自动分组已开启，正在执行分组...', 'info');
-                        performImmediateGrouping();
+                        // 开启自动分组时，background.js 会自动执行一次分组
+                        // 显示成功消息并等待结果
+                        showNotification('自动分组已开启', 'success');
+                        // 延迟更新界面，等待分组完成
+                        setTimeout(() => {
+                            console.log('自动分组开启后更新界面...');
+                            updateUI();
+                        }, 2000);
                     } else {
-                        showNotification('自动分组已关闭，现有分组保持不变');
+                        showNotification('自动分组已关闭');
+                        updateUI();
                     }
                 } else {
                     showNotification('操作失败，请重试', 'error');
