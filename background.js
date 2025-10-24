@@ -2,7 +2,7 @@
 
 // 全局变量
 let autoGroupingEnabled = false;
-let autoGroupingInterval = null;
+const ALARM_NAME = 'autoGroupingAlarm';  // 定时器名称
 let settings = {
     autoGrouping: false,
     groupInterval: 60, // 分钟 或 'am_pm'
@@ -101,6 +101,21 @@ function setupTabListeners() {
     // 自动分组将通过定时器执行，不需要在标签更新时触发
     // chrome.tabs.onUpdated.addListener(...)
 }
+
+/**
+ * 定时器监听器 - 当定时器触发时执行
+ */
+chrome.alarms.onAlarm.addListener((alarm) => {
+    console.log('定时器触发:', alarm.name);
+    
+    if (alarm.name === ALARM_NAME) {
+        console.log('执行定时自动分组...');
+        performAutoGrouping();
+    } else if (alarm.name === 'cleanupAlarm') {
+        console.log('执行清理过期标签记录...');
+        cleanupTabCreationTimes();
+    }
+});
 
 /**
  * 消息监听器
@@ -246,8 +261,8 @@ async function handleSettingsUpdated(newSettings, sendResponse) {
         
         // 如果自动分组间隔改变，重启定时器
         if (autoGroupingEnabled) {
-            stopAutoGrouping();
-            startAutoGrouping();
+            await stopAutoGrouping();
+            await startAutoGrouping();
         }
         
         sendResponse({ success: true });
@@ -260,26 +275,26 @@ async function handleSettingsUpdated(newSettings, sendResponse) {
 /**
  * 启动自动分组
  */
-function startAutoGrouping() {
-    if (autoGroupingInterval) {
-        clearInterval(autoGroupingInterval);
-    }
+async function startAutoGrouping() {
+    // 先清除现有的定时器
+    await chrome.alarms.clear(ALARM_NAME);
     
-    const intervalMs = settings.autoInterval * 60 * 1000; // 转换为毫秒
-    autoGroupingInterval = setInterval(performAutoGrouping, intervalMs);
+    // 创建新的定时器
+    // periodInMinutes: 定时器的间隔时间（分钟）
+    await chrome.alarms.create(ALARM_NAME, {
+        delayInMinutes: settings.autoInterval,  // 首次触发延迟
+        periodInMinutes: settings.autoInterval   // 之后每次触发间隔
+    });
     
-    console.log(`自动分组已启动，间隔: ${settings.autoInterval} 分钟`);
+    console.log(`自动分组定时器已启动，间隔: ${settings.autoInterval} 分钟`);
 }
 
 /**
  * 停止自动分组
  */
-function stopAutoGrouping() {
-    if (autoGroupingInterval) {
-        clearInterval(autoGroupingInterval);
-        autoGroupingInterval = null;
-    }
-    console.log('自动分组已停止');
+async function stopAutoGrouping() {
+    await chrome.alarms.clear(ALARM_NAME);
+    console.log('自动分组定时器已停止');
 }
 
 /**
@@ -682,7 +697,14 @@ function cleanupTabCreationTimes() {
     }
 }
 
-// 定期清理过期记录
-setInterval(cleanupTabCreationTimes, 60 * 60 * 1000); // 每小时清理一次
+// 定期清理过期记录 - 使用 chrome.alarms
+chrome.alarms.create('cleanupAlarm', {
+    periodInMinutes: 60  // 每小时清理一次
+});
 
 console.log('Auto Tab Grouper 后台服务脚本已加载');
+
+// 调试工具：查看当前活动的定时器
+chrome.alarms.getAll().then(alarms => {
+    console.log('当前活动的定时器:', alarms);
+});
